@@ -107,6 +107,9 @@ namespace SolutionParser_VS2012
             configurationInfo.IntermediateFolder = parseConfiguration_Folder(vcConfiguration, () => (vcConfiguration.IntermediateDirectory));
             configurationInfo.OutputFolder = parseConfiguration_Folder(vcConfiguration, () => (vcConfiguration.OutputDirectory));
             configurationInfo.TargetName = parseConfiguration_TargetName(vcConfiguration);
+            
+            // We get directories settings, (they are added to the environment variables)
+            parseConfiguration_DirectoriesSettings(vcConfiguration, configurationInfo);
 
             // We get compiler settings, such as the include path and 
             // preprocessor definitions...
@@ -192,6 +195,151 @@ namespace SolutionParser_VS2012
             }
 
             return commandLine;
+        }
+        
+        /// <summary>
+        /// We parse the directories settings, ie environment additions.
+        /// </summary>
+        private void parseConfiguration_DirectoriesSettings(VCConfiguration vcConfiguration, ProjectConfigurationInfo_CPP configurationInfo)
+        {
+            // We get the 'platform' from the configuration...
+            VCPlatform vcPlatform = Utils.call(() => (vcConfiguration.Platform as VCPlatform));
+            if (vcPlatform == null)
+            {
+                // Not all projects have a platform tool...
+                return;
+            }
+
+            // And extract various details from it...
+            parseConfiguration_DirectoriesSettings_Include(vcConfiguration, vcPlatform, configurationInfo);
+            parseConfiguration_DirectoriesSettings_LibPath(vcConfiguration, vcPlatform, configurationInfo);
+            parseConfiguration_DirectoriesSettings_Lib(vcConfiguration, vcPlatform, configurationInfo);
+        }
+
+        /// <summary>
+        /// Finds the collection of include directories for the configuration passed in.
+        /// </summary>
+        private void parseConfiguration_DirectoriesSettings_Include(VCConfiguration vcConfiguration, VCPlatform vcPlatform, ProjectConfigurationInfo_CPP configurationInfo)
+        {
+            // We:
+            // 1. Read the additional include paths (which are in a semi-colon-delimited string)
+            // 2. Resolve any symbols
+            // 3. Split it into separate paths
+            // 4. Read the inherited additional include paths 
+            // 5. Split it into separate paths
+            // 6. Ignore inherited paths
+            // 7. Make sure all paths are relative to the project root folder
+
+            // We get the 'engine'...
+            VCProjectEngine vcProjectEngine = Utils.call(() => (vcConfiguration.VCProjectEngine as VCProjectEngine));
+
+            // 1 & 2 & 3...
+            string strAdditionalIncludeDirectories = Utils.call(() => (vcPlatform.Evaluate("$(IncludePath)")));
+            List<string> additionalIncludeDirectories = Utils.split(strAdditionalIncludeDirectories, ';', ',');
+
+            // 4 & 5...
+            string strInheritedDirectories = Utils.call(() => (vcProjectEngine.Evaluate("$(IncludePath)")));
+            List<string> inheritedDirectories = Utils.split(strInheritedDirectories, ';', ',');
+          
+            foreach (string additionalIncludeDirectory in additionalIncludeDirectories)
+            {
+                // The string may be quoted. We need to remove the quotes...
+                string unquotedIncludeDirectory = additionalIncludeDirectory.Trim('"');
+
+                // 5. We are not interested in inherited directories.
+                if (unquotedIncludeDirectory == "" || inheritedDirectories.Contains(unquotedIncludeDirectory))
+                {
+                    continue;
+                }
+                                
+                // 6 & 7...
+                string relativePath = Utils.makeRelativePath(m_projectInfo.RootFolderAbsolute, unquotedIncludeDirectory);
+                configurationInfo.addIncludePath(relativePath);
+            }
+        }
+
+        /// <summary>
+        /// Finds the collection of reference directories for the configuration passed in.
+        /// </summary>
+        private void parseConfiguration_DirectoriesSettings_LibPath(VCConfiguration vcConfiguration, VCPlatform vcPlatform, ProjectConfigurationInfo_CPP configurationInfo)
+        {
+            // We:
+            // 1. Read the additional library paths (which are in a semi-colon-delimited string)
+            // 2. Resolve any symbols
+            // 3. Split it into separate paths
+            // 4. Read the inherited additional library paths 
+            // 5. Split it into separate paths
+            // 6. Ignore inherited paths
+            // 7. Make sure all paths are relative to the project root folder
+
+            // We get the 'engine'...
+            VCProjectEngine vcProjectEngine = Utils.call(() => (vcConfiguration.VCProjectEngine as VCProjectEngine));
+
+            // 1 & 2 & 3...
+            string strAdditionalLibraryDirectories = Utils.call(() => (vcPlatform.Evaluate("$(LibraryPath)")));
+            List<string> additionalLibraryDirectories = Utils.split(strAdditionalLibraryDirectories, ';', ',');
+
+            // 4 & 5...
+            string strInheritedDirectories = Utils.call(() => (vcProjectEngine.Evaluate("$(LibraryPath)")));
+            List<string> inheritedDirectories = Utils.split(strInheritedDirectories, ';', ',');
+          
+            foreach (string additionalLibraryDirectory in additionalLibraryDirectories)
+            {
+                // The string may be quoted. We need to remove the quotes...
+                string unquotedLibraryDirectory = additionalLibraryDirectory.Trim('"');
+
+                // 5. We are not interested in inherited directories.
+                if (unquotedLibraryDirectory == "" || inheritedDirectories.Contains(unquotedLibraryDirectory))
+                {
+                    continue;
+                }
+
+                // 6 & 7...
+                string relativePath = Utils.makeRelativePath(m_projectInfo.RootFolderAbsolute, unquotedLibraryDirectory);
+                configurationInfo.addLibraryPath(relativePath);
+            }
+        }
+
+        /// <summary>
+        /// Finds the collection of library directories for the configuration passed in.
+        /// </summary>
+        private void parseConfiguration_DirectoriesSettings_Lib(VCConfiguration vcConfiguration, VCPlatform vcPlatform, ProjectConfigurationInfo_CPP configurationInfo)
+        {
+            // We:
+            // 1. Read the additional library paths (which are in a semi-colon-delimited string)
+            // 2. Resolve any symbols
+            // 3. Split it into separate paths
+            // 4. Read the inherited additional library paths 
+            // 5. Split it into separate paths
+            // 6. Ignore inherited paths
+            // 7. Make sure all paths are relative to the project root folder
+
+            // We get the 'engine'...
+            VCProjectEngine vcProjectEngine = Utils.call(() => (vcConfiguration.VCProjectEngine as VCProjectEngine));
+
+            // 1 & 2 & 3...
+            string strAdditionalLibraryDirectories = Utils.call(() => (vcPlatform.Evaluate("$(LibraryPath)")));
+            List<string> additionalLibraryDirectories = Utils.split(strAdditionalLibraryDirectories, ';', ',');
+
+            // 4 & 5...
+            string strInheritedDirectories = Utils.call(() => (vcProjectEngine.Evaluate("$(LibraryPath)")));
+            List<string> inheritedDirectories = Utils.split(strInheritedDirectories, ';', ',');
+          
+            foreach (string additionalLibraryDirectory in additionalLibraryDirectories)
+            {
+                // The string may be quoted. We need to remove the quotes...
+                string unquotedLibraryDirectory = additionalLibraryDirectory.Trim('"');
+
+                // 5. We are not interested in inherited directories.
+                if (unquotedLibraryDirectory == "" || inheritedDirectories.Contains(unquotedLibraryDirectory))
+                {
+                    continue;
+                }
+
+                // 6 & 7...
+                string relativePath = Utils.makeRelativePath(m_projectInfo.RootFolderAbsolute, unquotedLibraryDirectory);
+                configurationInfo.addLibraryPath(relativePath);
+            }
         }
 
         /// <summary>
