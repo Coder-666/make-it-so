@@ -97,11 +97,23 @@ namespace MakeItSoLib
         }
 
         /// <summary>
+        /// Returns the config for the configuration passed in, accepts ALL configuration alias.
+        /// </summary>
+        public List<MakeItSoConfig_Configuration> getConfigurationAlias(string configurationName)
+        {
+            if (configurationName.ToLower() == "all")
+                return m_configurations.Values.ToList();
+            List<MakeItSoConfig_Configuration> single = new List<MakeItSoConfig_Configuration>();
+            single.Add(getConfiguration(configurationName));
+            return single;
+        }
+
+        /// <summary>
         /// Gets the C# compiler to use when building this project.
         /// </summary>
         public string CSharpCompiler
         {
-            get 
+            get
             {
                 if (m_solutionConfig.IsCygwinBuild == true)
                 {
@@ -176,6 +188,7 @@ namespace MakeItSoLib
         /// </summary>
         public void parseConfig(XmlNode configNode)
         {
+            parseConfig_Configuration(configNode);
             parseConfig_Libraries(configNode);
             parseConfig_LibraryPaths(configNode);
             parseConfig_IncludePaths(configNode);
@@ -191,6 +204,22 @@ namespace MakeItSoLib
         #endregion
 
         #region Private functions
+
+        /// <summary>
+        /// Parses the config file for include paths to be added or removed
+        /// for this project.
+        /// </summary>
+        private void parseConfig_Configuration(XmlNode configNode)
+        {
+            // We find 'Configuration' nodes...
+            XmlNodeList addIncludePathNodes = configNode.SelectNodes("Configuration");
+            foreach (XmlNode addIncludePathNode in addIncludePathNodes)
+            {
+                XmlAttribute nameAttribute = addIncludePathNode.Attributes["name"];
+                if (nameAttribute == null) continue;
+                if (getConfiguration(nameAttribute.Value) == null) continue;
+            }
+        }
 
         /// <summary>
         /// Parses the prefixes to use for 
@@ -289,7 +318,12 @@ namespace MakeItSoLib
                 XmlAttribute configurationAttribute = addCompilerFlagNode.Attributes["configuration"];
                 XmlAttribute flagAttribute = addCompilerFlagNode.Attributes["flag"];
                 if (flagAttribute == null || configurationAttribute == null) continue;
-                getConfiguration(configurationAttribute.Value).addCompilerFlagToAdd(flagAttribute.Value);
+                List<MakeItSoConfig_Configuration> configurations =
+                    getConfigurationAlias(configurationAttribute.Value);
+                foreach (MakeItSoConfig_Configuration configuration in configurations)
+                {
+                    configuration.addCompilerFlagToAdd(flagAttribute.Value);
+                }
             }
         }
 
@@ -306,7 +340,12 @@ namespace MakeItSoLib
                 XmlAttribute configurationAttribute = addLinkerFlagNode.Attributes["configuration"];
                 XmlAttribute flagAttribute = addLinkerFlagNode.Attributes["flag"];
                 if (flagAttribute == null || configurationAttribute == null) continue;
-                getConfiguration(configurationAttribute.Value).addLinkerFlagToAdd(flagAttribute.Value);
+                List<MakeItSoConfig_Configuration> configurations =
+                    getConfigurationAlias(configurationAttribute.Value);
+                foreach (MakeItSoConfig_Configuration configuration in configurations)
+                {
+                    configuration.addLinkerFlagToAdd(flagAttribute.Value);
+                }
             }
         }
 
@@ -323,7 +362,12 @@ namespace MakeItSoLib
                 XmlAttribute configurationAttribute = addArchiverFlagNode.Attributes["configuration"];
                 XmlAttribute flagAttribute = addArchiverFlagNode.Attributes["flag"];
                 if (flagAttribute == null || configurationAttribute == null) continue;
-                getConfiguration(configurationAttribute.Value).addArchiverFlagToAdd(flagAttribute.Value);
+                List<MakeItSoConfig_Configuration> configurations =
+                    getConfigurationAlias(configurationAttribute.Value);
+                foreach (MakeItSoConfig_Configuration configuration in configurations)
+                {
+                    configuration.addArchiverFlagToAdd(flagAttribute.Value);
+                }
             }
         }
 
@@ -349,7 +393,12 @@ namespace MakeItSoLib
                 XmlAttribute configurationAttribute = addPreprocessorDefinitionNode.Attributes["configuration"];
                 XmlAttribute definitionAttribute = addPreprocessorDefinitionNode.Attributes["definition"];
                 if (definitionAttribute == null || configurationAttribute == null) continue;
-                getConfiguration(configurationAttribute.Value).addPreprocessorDefinitionToAdd(definitionAttribute.Value);
+                List<MakeItSoConfig_Configuration> configurations =
+                    getConfigurationAlias(configurationAttribute.Value);
+                foreach (MakeItSoConfig_Configuration configuration in configurations)
+                {
+                    configuration.addPreprocessorDefinitionToAdd(definitionAttribute.Value);
+                }
             }
         }
 
@@ -375,7 +424,12 @@ namespace MakeItSoLib
                 XmlAttribute configurationAttribute = addLibraryPathNode.Attributes["configuration"];
                 XmlAttribute pathAttribute = addLibraryPathNode.Attributes["path"];
                 if (pathAttribute == null || configurationAttribute == null) continue;
-                getConfiguration(configurationAttribute.Value).addLibraryPathToAdd(pathAttribute.Value);
+                List<MakeItSoConfig_Configuration> configurations =
+                    getConfigurationAlias(configurationAttribute.Value);
+                foreach (MakeItSoConfig_Configuration configuration in configurations)
+                {
+                    configuration.addLibraryPathToAdd(pathAttribute.Value);
+                }
             }
         }
 
@@ -401,7 +455,12 @@ namespace MakeItSoLib
                 XmlAttribute configurationAttribute = addIncludePathNode.Attributes["configuration"];
                 XmlAttribute pathAttribute = addIncludePathNode.Attributes["path"];
                 if (pathAttribute == null || configurationAttribute == null) continue;
-                getConfiguration(configurationAttribute.Value).addIncludePathToAdd(pathAttribute.Value);
+                List<MakeItSoConfig_Configuration> configurations =
+                    getConfigurationAlias(configurationAttribute.Value);
+                foreach (MakeItSoConfig_Configuration configuration in configurations)
+                {
+                    configuration.addIncludePathToAdd(pathAttribute.Value);
+                }
             }
         }
 
@@ -427,7 +486,12 @@ namespace MakeItSoLib
                 XmlAttribute configurationAttribute = addLibraryNode.Attributes["configuration"];
                 XmlAttribute libraryAttribute = addLibraryNode.Attributes["library"];
                 if (libraryAttribute == null || configurationAttribute == null) continue;
-                getConfiguration(configurationAttribute.Value).addLibraryToAdd(libraryAttribute.Value);
+                List<MakeItSoConfig_Configuration> configurations =
+                    getConfigurationAlias(configurationAttribute.Value);
+                foreach (MakeItSoConfig_Configuration configuration in configurations)
+                {
+                    configuration.addLibraryToAdd(libraryAttribute.Value);
+                }
             }
         }
 
