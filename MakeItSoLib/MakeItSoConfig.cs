@@ -96,11 +96,33 @@ namespace MakeItSoLib
             get { return m_cygwinBuild; }
         }
 
-		/// <summary>
-		/// Returns the list of build arguments
+        /// <summary>
+        /// Gets whether we are creating a build for cygwin.
+        /// </summary>
+        public bool IsGCCBuild
+        {
+            get { return m_gccBuild; }
+        }
+
+        /// <summary>
+        /// Returns the list of build arguments
         public List<String> BuildArguments
         {
             get { return m_buildArguments; }
+        }
+
+        /// <summary>
+        /// Returns the list of link stage arguments
+        public List<String> LinkArguments
+        {
+            get { return m_linkArguments; }
+        }
+
+        /// <summary>
+        /// Returns the list of link stage arguments
+        public List<String> LibrarianArguments
+        {
+            get { return m_librarianArguments; }
         }
 
         /// <summary>
@@ -191,12 +213,28 @@ namespace MakeItSoLib
                             parseCommandLine_File(value);
                             break;
 
+                        case "-config":
+                            parseCommandLine_Config(value);
+                            break;
+
+                        case "-gcc":
+                            parseCommandLine_GCC(value);
+                            break;
+
                         case "-cygwin":
                             parseCommandLine_Cygwin(value);
                             break;
 
                         case "-build-args":
                             parseCommandLine_BuildArgs(value);
+                            break;
+
+                        case "-link-args":
+                            parseCommandLine_LinkArgs(value);
+                            break;
+
+                        case "-librarian-args":
+                            parseCommandLine_LibrarianArgs(value);
                             break;
 
                         default:
@@ -211,14 +249,17 @@ namespace MakeItSoLib
                 // The command-line is in a format we don't recognize, so
                 // we show the help text, and set MakeItSo not to run...
                 Log.log("----------------------------------------------------------------------------------");
-                Log.log("MakeItSo converts Visual Studio solutions to Linux gcc makefiles");
+                Log.log("MakeItSo converts Visual Studio solutions to Linux makefiles");
                 Log.log("See http://code.google.com/p/make-it-so/");
                 Log.log("");
                 Log.log("Command-line:");
                 Log.log("   (empty command-line)            Converts the .sln file in the working folder, if there is one.");
                 Log.log("   -file=[solution-file]           Converts the solution specified.");
                 Log.log("   -cygwin=[True/False]            Creates a cygwin makefile if True. Defaults to False.");
-                Log.log("   -build-args=[arg1,arg2,...]     Adds build arguments to gcc");
+                Log.log("   -gcc=[True/False]               Creates a gcc makefile if True. Defaults to True.");
+                Log.log("   -build-args=[arg1,arg2,...]     Adds build arguments to compiler");
+                Log.log("   -link-args=[arg1,arg2,...]      Adds build arguments to linker");
+                Log.log("   -librarian-args=[arg1,arg2,...] Adds build arguments to librarian");
                 Log.log("---------------------------------------------------------------------------------");
 
                 m_convertSolution = false;
@@ -240,6 +281,18 @@ namespace MakeItSoLib
         }
 
         /// <summary>
+        /// Parses the config and solution folder from the -file parameter.
+        /// </summary>
+        private void parseCommandLine_Config(string value)
+        {
+            // We get the solution folder and solution name...
+            string fullPath = Path.Combine(m_solutionRootFolder, value);
+
+            // And we change the working folder...
+            parseConfigFile(fullPath);
+        }
+
+        /// <summary>
         /// Parses whether we are creating a cygwin build.
         /// </summary>
         private void parseCommandLine_Cygwin(string value)
@@ -252,12 +305,41 @@ namespace MakeItSoLib
             }
         }
 
-		/// <summary>
-		/// Parses the build arguments list given by the user
-		/// </summary>
+        /// <summary>
+        /// Parses whether we are creating a gcc build.
+        /// </summary>
+        private void parseCommandLine_GCC(string value)
+        {
+            bool result;
+            bool success = Boolean.TryParse(value, out result);
+            if (success == true)
+            {
+                m_gccBuild = result;
+            }
+        }
+
+        /// <summary>
+        /// Parses the build arguments list given by the user
+        /// </summary>
         private void parseCommandLine_BuildArgs(string value)
         {
             m_buildArguments = Utils.split(value, ',');
+        }
+
+        /// <summary>
+        /// Parses the link arguments list given by the user
+        /// </summary>
+        private void parseCommandLine_LinkArgs(string value)
+        {
+            m_linkArguments = Utils.split(value, ',');
+        }
+
+        /// <summary>
+        /// Parses the librarian arguments list given by the user
+        /// </summary>
+        private void parseCommandLine_LibrarianArgs(string value)
+        {
+            m_librarianArguments = Utils.split(value, ',');
         }
 
         /// <summary>
@@ -266,6 +348,14 @@ namespace MakeItSoLib
         private void parseConfigFile()
         {
             string configFile = "MakeItSo.config";
+            parseConfigFile(configFile);
+        }
+
+        /// <summary>
+        /// We parse the MakeItSo.config file.
+        /// </summary>
+        private void parseConfigFile(string configFile)
+        {
             if (File.Exists(configFile) == false)
             {
                 return;
@@ -366,8 +456,17 @@ namespace MakeItSoLib
         // True if we are building for cygwin...
         private bool m_cygwinBuild = false;
 
+        // True if we are building for gcc...
+        private bool m_gccBuild = true;
+
         // Build arguments to add
         private List<String> m_buildArguments;
+
+        // Link arguments to add
+        private List<String> m_linkArguments;
+
+        // Librarian arguments to add
+        private List<String> m_librarianArguments;
 
         // Will be set false if we can't parse the command-line...
         private bool m_convertSolution = true;

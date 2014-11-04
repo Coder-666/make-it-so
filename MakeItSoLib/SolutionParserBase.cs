@@ -67,6 +67,8 @@ namespace MakeItSoLib
                 updateIncludePaths(configuration);
                 updatePreprocessorDefinitions(configuration);
                 updateCompilerFlags(configuration);
+                updateLinkerFlags(configuration);
+                updateArchiverFlags(configuration);
             }
         }
 
@@ -92,6 +94,36 @@ namespace MakeItSoLib
             foreach (string flag in flagsToAdd)
             {
                 configuration.addCompilerFlag(flag);
+            }
+        }
+
+        /// <summary>
+        /// Updates linker flags from the config settings.
+        /// </summary>
+        private void updateLinkerFlags(ProjectConfigurationInfo_CPP configuration)
+        {
+            MakeItSoConfig_Project projectSettings = MakeItSoConfig.Instance.getProjectConfig(configuration.ParentProjectInfo.Name);
+
+            // We add any new definitions...
+            List<string> flagsToAdd = projectSettings.getConfiguration(configuration.Name).getLinkerFlagsToAdd();
+            foreach (string flag in flagsToAdd)
+            {
+                configuration.addLinkerFlag(flag);
+            }
+        }
+
+        /// <summary>
+        /// Updates archiver flags from the config settings.
+        /// </summary>
+        private void updateArchiverFlags(ProjectConfigurationInfo_CPP configuration)
+        {
+            MakeItSoConfig_Project projectSettings = MakeItSoConfig.Instance.getProjectConfig(configuration.ParentProjectInfo.Name);
+
+            // We add any new definitions...
+            List<string> flagsToAdd = projectSettings.getConfiguration(configuration.Name).getArchiverFlagsToAdd();
+            foreach (string flag in flagsToAdd)
+            {
+                configuration.addArchiverFlag(flag);
             }
         }
 

@@ -233,6 +233,54 @@ namespace MakeItSoLib
         }
 
         /// <summary>
+        /// Adds a linker flag.
+        /// </summary>
+        public void addLinkerFlag(string flag)
+        {
+            m_linkerFlags.Add(flag);
+        }
+
+        /// <summary>
+        /// Removes the flag passed from the collection we're managing.
+        /// </summary>
+        public void removeLinkerFlag(string flag)
+        {
+            m_linkerFlags.Remove(flag);
+        }
+
+        /// <summary>
+        /// Gets the collection of linker flags.
+        /// </summary>
+        public HashSet<string> getLinkerFlags()
+        {
+            return m_linkerFlags;
+        }
+
+        /// <summary>
+        /// Adds a archiver flag.
+        /// </summary>
+        public void addArchiverFlag(string flag)
+        {
+            m_archiverFlags.Add(flag);
+        }
+
+        /// <summary>
+        /// Removes the flag passed from the collection we're managing.
+        /// </summary>
+        public void removeArchiverFlag(string flag)
+        {
+            m_archiverFlags.Remove(flag);
+        }
+
+        /// <summary>
+        /// Gets the collection of archiver flags.
+        /// </summary>
+        public HashSet<string> getArchiverFlags()
+        {
+            return m_archiverFlags;
+        }
+
+        /// <summary>
         /// Adds info about a custom build rule (for one file) to this
         /// configuration.
         /// </summary>
@@ -305,8 +353,14 @@ namespace MakeItSoLib
         // These are held as 'raw names', e.g. 'Math' instead of 'Math.lib' or 'libMath.a'
         private HashSet<string> m_libraryRawNames = new HashSet<string>();
 
-        // The collection of compliler flags...
+        // The collection of compiler flags...
         private HashSet<string> m_compilerFlags = new HashSet<string>();
+
+        // The collection of linker flags...
+        private HashSet<string> m_linkerFlags = new HashSet<string>();
+
+        // The collection of archiver flags...
+        private HashSet<string> m_archiverFlags = new HashSet<string>();
 
         // The collection of custom build rules for this configuration...
         private List<CustomBuildRuleInfo_CPP> m_customBuildRuleInfos = new List<CustomBuildRuleInfo_CPP>();

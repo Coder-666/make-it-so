@@ -131,6 +131,22 @@ namespace MakeItSoLib
         }
 
         /// <summary>
+        /// Gets the linker to use when building this project.
+        /// </summary>
+        public string Linker
+        {
+            get { return m_linker; }
+        }
+
+        /// <summary>
+        /// Gets the archiver to use when building this project.
+        /// </summary>
+        public string Archiver
+        {
+            get { return m_archiver; }
+        }
+
+        /// <summary>
         /// Gets whether we should convert this project to a shared-objects
         /// library if it is a static library.
         /// </summary>
@@ -165,6 +181,8 @@ namespace MakeItSoLib
             parseConfig_IncludePaths(configNode);
             parseConfig_PreprocessorDefinitions(configNode);
             parseConfig_CompilerFlags(configNode);
+            parseConfig_LinkerFlags(configNode);
+            parseConfig_ArchiverFlags(configNode);
             parseConfig_Compilers(configNode);
             parseConfig_FolderPrefixes(configNode);
             parseConfig_Misc(configNode);
@@ -228,6 +246,8 @@ namespace MakeItSoLib
             findCompiler(configNode, "CCompiler", ref m_cCompiler);
             findCompiler(configNode, "CSharpCompiler", ref m_csharpCompiler);
             findCompiler(configNode, "CSharpCompiler", ref m_cygwinCSharpCompiler);
+            findCompiler(configNode, "Linker", ref m_linker);
+            findCompiler(configNode, "Archiver", ref m_archiver);
         }
 
         /// <summary>
@@ -270,6 +290,40 @@ namespace MakeItSoLib
                 XmlAttribute flagAttribute = addCompilerFlagNode.Attributes["flag"];
                 if (flagAttribute == null || configurationAttribute == null) continue;
                 getConfiguration(configurationAttribute.Value).addCompilerFlagToAdd(flagAttribute.Value);
+            }
+        }
+
+        /// <summary>
+        /// Parses the config file for linker flags to be added or removed
+        /// for this project.
+        /// </summary>
+        private void parseConfig_LinkerFlags(XmlNode configNode)
+        {
+            // We find 'AddLinkerFlag' nodes...
+            XmlNodeList addLinkerFlagNodes = configNode.SelectNodes("AddLinkerFlag");
+            foreach (XmlNode addLinkerFlagNode in addLinkerFlagNodes)
+            {
+                XmlAttribute configurationAttribute = addLinkerFlagNode.Attributes["configuration"];
+                XmlAttribute flagAttribute = addLinkerFlagNode.Attributes["flag"];
+                if (flagAttribute == null || configurationAttribute == null) continue;
+                getConfiguration(configurationAttribute.Value).addLinkerFlagToAdd(flagAttribute.Value);
+            }
+        }
+
+        /// <summary>
+        /// Parses the config file for archiver flags to be added or removed
+        /// for this project.
+        /// </summary>
+        private void parseConfig_ArchiverFlags(XmlNode configNode)
+        {
+            // We find 'AddArchiverFlag' nodes...
+            XmlNodeList addArchiverFlagNodes = configNode.SelectNodes("AddArchiverFlag");
+            foreach (XmlNode addArchiverFlagNode in addArchiverFlagNodes)
+            {
+                XmlAttribute configurationAttribute = addArchiverFlagNode.Attributes["configuration"];
+                XmlAttribute flagAttribute = addArchiverFlagNode.Attributes["flag"];
+                if (flagAttribute == null || configurationAttribute == null) continue;
+                getConfiguration(configurationAttribute.Value).addArchiverFlagToAdd(flagAttribute.Value);
             }
         }
 
@@ -450,6 +504,12 @@ namespace MakeItSoLib
 
         // The C++ compiler to use when building this project...
         private string m_cppCompiler = "g++";
+
+        // The linker to use when building this project...
+        private string m_linker = "g++";
+
+        // The archiver to use when building this project...
+        private string m_archiver = "ar";
 
         // Whether we will convert static libraries to shared-objects libraries
         // for this project...

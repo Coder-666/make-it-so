@@ -116,6 +116,38 @@ namespace MakeItSoLib
             return m_compilerFlagsToAdd.ToList();
         }
 
+        /// <summary>
+        /// Adds a linker flag to the configuration.
+        /// </summary>
+        public void addLinkerFlagToAdd(string flag)
+        {
+            m_linkerFlagsToAdd.Add(flag);
+        }
+
+        /// <summary>
+        /// Gets the collection of linker flags to add.
+        /// </summary>
+        public List<string> getLinkerFlagsToAdd()
+        {
+            return m_linkerFlagsToAdd.ToList();
+        }
+
+        /// <summary>
+        /// Adds a archiver flag to the configuration.
+        /// </summary>
+        public void addArchiverFlagToAdd(string flag)
+        {
+            m_archiverFlagsToAdd.Add(flag);
+        }
+
+        /// <summary>
+        /// Gets the collection of archiver flags to add.
+        /// </summary>
+        public List<string> getArchiverFlagsToAdd()
+        {
+            return m_archiverFlagsToAdd.ToList();
+        }
+
         #endregion
 
         #region Private data
@@ -137,6 +169,12 @@ namespace MakeItSoLib
 
         // Compiler flags to add to the configuration...
         private HashSet<string> m_compilerFlagsToAdd = new HashSet<string>();
+
+        // Archiver flags to add to the configuration...
+        private HashSet<string> m_archiverFlagsToAdd = new HashSet<string>();
+
+        // Linker flags to add to the configuration...
+        private HashSet<string> m_linkerFlagsToAdd = new HashSet<string>();
 
         #endregion
     }

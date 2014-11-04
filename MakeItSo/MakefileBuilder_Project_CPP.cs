@@ -74,6 +74,8 @@ namespace MakeItSo
                 createPreprocessorDefinitionsVariables();
                 createImplicitlyLinkedObjectsVariables();
                 createCompilerFlagsVariables();
+                createLinkerFlagsVariables();
+                createArchiverFlagsVariables();
 
                 // We create an 'all configurations' root target...
                 createAllConfigurationsTarget();
@@ -106,11 +108,21 @@ namespace MakeItSo
             m_file.WriteLine("# Compiler flags...");
 
             MakeItSoConfig_Project projectConfig = MakeItSoConfig.Instance.getProjectConfig(m_projectInfo.Name);
+
             m_file.Write("CPP_COMPILER = " + projectConfig.CPPCompiler);
             createCompilerArgsList(projectConfig);
 
             m_file.WriteLine("C_COMPILER = " + projectConfig.CCompiler);
+            createCompilerArgsList(projectConfig);
+
+            m_file.WriteLine("LINK = " + projectConfig.Linker);
+            createLinkerArgsList(projectConfig);
+            
+            m_file.WriteLine("AR = " + projectConfig.Archiver);
+            createArchiverArgsList(projectConfig);
+            
             m_file.WriteLine("");
+            
         }
 		
 		/// <summary>
@@ -127,6 +139,42 @@ namespace MakeItSo
                     ArgsString += " -" + Arg;
                 }
 			}
+
+            m_file.WriteLine(ArgsString);
+        }
+
+        /// <summary>
+        ///	Creates the link arguments string.
+        ///	</summary>
+        private void createLinkerArgsList(MakeItSoConfig_Project projectConfig)
+        {
+            String ArgsString = "";
+
+            if (projectConfig.SolutionConfig.LinkArguments != null)
+            {
+                foreach (String Arg in projectConfig.SolutionConfig.LinkArguments)
+                {
+                    ArgsString += " -" + Arg;
+                }
+            }
+
+            m_file.WriteLine(ArgsString);
+        }
+
+        /// <summary>
+        ///	Creates the archive arguments string.
+        ///	</summary>
+        private void createArchiverArgsList(MakeItSoConfig_Project projectConfig)
+        {
+            String ArgsString = "";
+
+            if (projectConfig.SolutionConfig.LibrarianArguments != null)
+            {
+                foreach (String Arg in projectConfig.SolutionConfig.LibrarianArguments)
+                {
+                    ArgsString += " -" + Arg;
+                }
+            }
 
             m_file.WriteLine(ArgsString);
         }
@@ -150,12 +198,80 @@ namespace MakeItSo
                 // (unless this is a cygwin build, which doesn't)...
                 if (configuration.ParentProjectInfo.ProjectType == ProjectInfo_CPP.ProjectTypeEnum.CPP_DLL
                     &&
-                    MakeItSoConfig.Instance.IsCygwinBuild == false)
+                    MakeItSoConfig.Instance.IsCygwinBuild == false
+                    &&
+                    MakeItSoConfig.Instance.IsGCCBuild == true)
                 {
                     flags += "-fPIC ";
                 }
 
                 foreach (string flag in configuration.getCompilerFlags())
+                {
+                    flags += (flag + " ");
+                }
+
+                // We write the variable...
+                m_file.WriteLine("{0}={1}", variableName, flags);
+            }
+
+            m_file.WriteLine("");
+        }
+
+        /// <summary>
+        /// Creates variables for the linker flags for each configuration.
+        /// </summary>
+        private void createLinkerFlagsVariables()
+        {
+            // We create an collection of linker flags for each configuration...
+            m_file.WriteLine("# Linker flags...");
+            foreach (ProjectConfigurationInfo_CPP configuration in m_projectInfo.getConfigurationInfos())
+            {
+                // The variable name...
+                string variableName = getLinkerFlagsVariableName(configuration);
+
+                // The flags...
+                string flags = "";
+
+                // If we are using GCC then we need to set some flags...
+                if (MakeItSoConfig.Instance.IsGCCBuild == true)
+                {
+                    flags += "-Wl,-rpath,./";
+                }
+
+                foreach (string flag in configuration.getLinkerFlags())
+                {
+                    flags += (flag + " ");
+                }
+
+                // We write the variable...
+                m_file.WriteLine("{0}={1}", variableName, flags);
+            }
+
+            m_file.WriteLine("");
+        }
+
+        /// <summary>
+        /// Creates variables for the archiver flags for each configuration.
+        /// </summary>
+        private void createArchiverFlagsVariables()
+        {
+            // We create an collection of archiver flags for each configuration...
+            m_file.WriteLine("# Archiver flags...");
+            foreach (ProjectConfigurationInfo_CPP configuration in m_projectInfo.getConfigurationInfos())
+            {
+                // The variable name...
+                string variableName = getArchiverFlagsVariableName(configuration);
+
+                // The flags...
+                string flags = "";
+
+                // If we are using GCC then we need to set some flags...
+                if (MakeItSoConfig.Instance.IsGCCBuild == true)
+                {
+                    flags += "rcs";
+                }
+
+                foreach (string flag in configuration.getArchiverFlags())
                 {
                     flags += (flag + " ");
                 }
@@ -298,7 +414,9 @@ namespace MakeItSo
                 // If we have some libraries, we surround them with start-group
                 // and end-group tags. This is needed as otherwise gcc is sensitive
                 // to the order than libraries are declared...
-                if (libraries != "")
+                if (libraries != ""
+                    &&
+                    MakeItSoConfig.Instance.IsGCCBuild == true)
                 {
                     libraries = String.Format("-Wl,--start-group {0} -Wl,--end-group", libraries);
                 }
@@ -362,6 +480,24 @@ namespace MakeItSo
         private string getCompilerFlagsVariableName(ProjectConfigurationInfo_CPP configuration)
         {
             return configuration.Name + "_Compiler_Flags";
+        }
+
+        /// <summary>
+        /// Returns the linker-flags variable name for the configuration passed in.
+        /// For example "Debug_Linker_Flags".
+        /// </summary>
+        private string getLinkerFlagsVariableName(ProjectConfigurationInfo_CPP configuration)
+        {
+            return configuration.Name + "_Linker_Flags";
+        }
+
+        /// <summary>
+        /// Returns the archiver-flags variable name for the configuration passed in.
+        /// For example "Debug_Archiver_Flags".
+        /// </summary>
+        private string getArchiverFlagsVariableName(ProjectConfigurationInfo_CPP configuration)
+        {
+            return configuration.Name + "_Archiver_Flags";
         }
 
         /// <summary>
@@ -532,6 +668,8 @@ namespace MakeItSo
             // We find variables needed for the link step...
             string outputFolder = getOutputFolder(configurationInfo);
             string implicitlyLinkedObjectFiles = String.Format("$({0})", getImplicitlyLinkedObjectsVariableName(configurationInfo));
+            string linkerFlags = String.Format("$({0})", getLinkerFlagsVariableName(configurationInfo));
+            string archiverFlags = String.Format("$({0})", getArchiverFlagsVariableName(configurationInfo));
 
             // The link step...
             switch (m_projectInfo.ProjectType)
@@ -540,7 +678,7 @@ namespace MakeItSo
                 case ProjectInfo_CPP.ProjectTypeEnum.CPP_EXECUTABLE:
                     string libraryPath = getLibraryPathVariableName(configurationInfo);
                     string libraries = getLibrariesVariableName(configurationInfo);
-                    m_file.WriteLine("\tg++ {0} $({1}) $({2}) -Wl,-rpath,./ -o {3}/{4}.exe", objectFiles, libraryPath, libraries, outputFolder, m_projectInfo.Name);
+                    m_file.WriteLine("\t$(LINK) {0} $({1}) $({2}) $({3}) -o {4}/{5}.exe", objectFiles, libraryPath, libraries, linkerFlags, outputFolder, m_projectInfo.Name);
                     break;
 
 
@@ -548,27 +686,30 @@ namespace MakeItSo
                 case ProjectInfo_CPP.ProjectTypeEnum.CPP_STATIC_LIBRARY:
 					// We use the Target Name as the output file name if it exists
                     if (configurationInfo.TargetName != "")
-                        m_file.WriteLine("\tar rcs {0}/lib{1}.a {2} {3}", outputFolder, configurationInfo.TargetName, objectFiles, implicitlyLinkedObjectFiles);
+                        m_file.WriteLine("\t$(AR) $({0}) {1}/lib{2}.a {3} {4}", archiverFlags, outputFolder, configurationInfo.TargetName, objectFiles, implicitlyLinkedObjectFiles);
                     else
-                        m_file.WriteLine("\tar rcs {0}/lib{1}.a {2} {3}", outputFolder, m_projectInfo.Name, objectFiles, implicitlyLinkedObjectFiles);
+                        m_file.WriteLine("\t$(AR) $({0}) {1}/lib{2}.a {3} {4}", archiverFlags, outputFolder, m_projectInfo.Name, objectFiles, implicitlyLinkedObjectFiles);
                     break;
 
 
                 // Creates a DLL (shared-objects) library...
                 case ProjectInfo_CPP.ProjectTypeEnum.CPP_DLL:
-                    string dllName, pic;
+                    string dllName, pic = "";
                     if(MakeItSoConfig.Instance.IsCygwinBuild == true)
                     {
                         dllName = String.Format("lib{0}.dll", m_projectInfo.Name);
-                        pic = "";
+                    }
+                    else if (MakeItSoConfig.Instance.IsGCCBuild == true)
+                    {
+                        dllName = String.Format("lib{0}.so", m_projectInfo.Name);
+                        pic = "-fPIC -shared -Wl,-soname," + dllName;
                     }
                     else
                     {
-                        dllName = String.Format("lib{0}.so", m_projectInfo.Name);
-                        pic = "-fPIC";
+                        dllName = String.Format("lib{0}.dll", m_projectInfo.Name);
                     }
-                
-                    m_file.WriteLine("\tg++ {0} -shared -Wl,-soname,{1} -o {2}/{1} {3} {4}", pic, dllName, outputFolder, objectFiles, implicitlyLinkedObjectFiles);
+
+                    m_file.WriteLine("\t$(LINK) {0} $({1}) -o {3}/{2} {4} {5}", pic, linkerFlags, dllName, outputFolder, objectFiles, implicitlyLinkedObjectFiles);
                     break;
             }
 

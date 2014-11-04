@@ -82,7 +82,7 @@ namespace MakeItSo
 
         /// <summary>
         /// Returns the solution version as a number, for example
-        /// 10 = VS2008, 11 = VS2010,
+        /// 10 = VS2008, 11 = VS2010, 12 = VS2012,
         /// </summary>
         static int getSolutionVersion(string solutionFilename)
         {
