@@ -111,18 +111,21 @@ namespace MakeItSo
 
             m_file.Write("CPP_COMPILER = " + projectConfig.CPPCompiler);
             createCompilerArgsList(projectConfig);
+            m_file.WriteLine("");
 
-            m_file.WriteLine("C_COMPILER = " + projectConfig.CCompiler);
+            m_file.Write("C_COMPILER = " + projectConfig.CCompiler);
             createCompilerArgsList(projectConfig);
+            m_file.WriteLine("");
 
-            m_file.WriteLine("LINK = " + projectConfig.Linker);
+            m_file.Write("LINK = " + projectConfig.Linker);
             createLinkerArgsList(projectConfig);
-            
-            m_file.WriteLine("AR = " + projectConfig.Archiver);
-            createArchiverArgsList(projectConfig);
-            
             m_file.WriteLine("");
             
+            m_file.Write("AR = " + projectConfig.Archiver);
+            createArchiverArgsList(projectConfig);
+            m_file.WriteLine("");
+
+            m_file.WriteLine("");
         }
 		
 		/// <summary>
@@ -140,7 +143,10 @@ namespace MakeItSo
                 }
 			}
 
-            m_file.WriteLine(ArgsString);
+            if (!string.IsNullOrEmpty(ArgsString))
+            {
+                m_file.WriteLine(ArgsString);
+            }
         }
 
         /// <summary>
@@ -158,7 +164,10 @@ namespace MakeItSo
                 }
             }
 
-            m_file.WriteLine(ArgsString);
+            if (!string.IsNullOrEmpty(ArgsString))
+            {
+                m_file.WriteLine(ArgsString);
+            }
         }
 
         /// <summary>
@@ -176,7 +185,10 @@ namespace MakeItSo
                 }
             }
 
-            m_file.WriteLine(ArgsString);
+            if (!string.IsNullOrEmpty(ArgsString))
+            {
+                m_file.WriteLine(ArgsString);
+            }
         }
 
         /// <summary>
@@ -235,7 +247,7 @@ namespace MakeItSo
                 // If we are using GCC then we need to set some flags...
                 if (MakeItSoConfig.Instance.IsGCCBuild == true)
                 {
-                    flags += "-Wl,-rpath,./";
+                    flags += "-Wl,-rpath,./ ";
                 }
 
                 foreach (string flag in configuration.getLinkerFlags())
@@ -268,7 +280,7 @@ namespace MakeItSo
                 // If we are using GCC then we need to set some flags...
                 if (MakeItSoConfig.Instance.IsGCCBuild == true)
                 {
-                    flags += "rcs";
+                    flags += "rcs ";
                 }
 
                 foreach (string flag in configuration.getArchiverFlags())
@@ -678,7 +690,7 @@ namespace MakeItSo
                 case ProjectInfo_CPP.ProjectTypeEnum.CPP_EXECUTABLE:
                     string libraryPath = getLibraryPathVariableName(configurationInfo);
                     string libraries = getLibrariesVariableName(configurationInfo);
-                    m_file.WriteLine("\t$(LINK) {0} $({1}) $({2}) $({3}) -o {4}/{5}.exe", objectFiles, libraryPath, libraries, linkerFlags, outputFolder, m_projectInfo.Name);
+                    m_file.WriteLine("\t$(LINK) {0} $({1}) $({2}) {3} -o {4}/{5}.exe", objectFiles, libraryPath, libraries, linkerFlags, outputFolder, m_projectInfo.Name);
                     break;
 
 
@@ -686,9 +698,9 @@ namespace MakeItSo
                 case ProjectInfo_CPP.ProjectTypeEnum.CPP_STATIC_LIBRARY:
 					// We use the Target Name as the output file name if it exists
                     if (configurationInfo.TargetName != "")
-                        m_file.WriteLine("\t$(AR) $({0}) {1}/lib{2}.a {3} {4}", archiverFlags, outputFolder, configurationInfo.TargetName, objectFiles, implicitlyLinkedObjectFiles);
+                        m_file.WriteLine("\t$(AR) {0} {1}/lib{2}.a {3} {4}", archiverFlags, outputFolder, configurationInfo.TargetName, objectFiles, implicitlyLinkedObjectFiles);
                     else
-                        m_file.WriteLine("\t$(AR) $({0}) {1}/lib{2}.a {3} {4}", archiverFlags, outputFolder, m_projectInfo.Name, objectFiles, implicitlyLinkedObjectFiles);
+                        m_file.WriteLine("\t$(AR) {0} {1}/lib{2}.a {3} {4}", archiverFlags, outputFolder, m_projectInfo.Name, objectFiles, implicitlyLinkedObjectFiles);
                     break;
 
 
@@ -709,7 +721,7 @@ namespace MakeItSo
                         dllName = String.Format("lib{0}.dll", m_projectInfo.Name);
                     }
 
-                    m_file.WriteLine("\t$(LINK) {0} $({1}) -o {3}/{2} {4} {5}", pic, linkerFlags, dllName, outputFolder, objectFiles, implicitlyLinkedObjectFiles);
+                    m_file.WriteLine("\t$(LINK) {0} {1} -o {3}/{2} {4} {5}", pic, linkerFlags, dllName, outputFolder, objectFiles, implicitlyLinkedObjectFiles);
                     break;
             }
 
